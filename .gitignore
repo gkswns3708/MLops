@@ -3,3 +3,8 @@
 /Raw_Data
 /Test_Data
 /train.csv
+/*.json
+/practice.ipynb
+/train
+/.gitignore
+/__pycache
