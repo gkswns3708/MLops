@@ -5,6 +5,5 @@
 /train.csv
 /*.json
 /practice.ipynb
-/train
 /.gitignore
-/__pycache
+/__pycache__
