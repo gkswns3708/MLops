@@ -1,10 +1,5 @@
-import json
-from glob import glob
-import os.path as osp
-
-
-def make_label_encoder_decoder(save_path):
-    path_list = sorted(glob(osp.join(save_path, "*/*.json")))
+def make_label_encoder_decoder(config : dict):
+    path_list = sorted(glob(osp.join(config['Prepared_Data_Path'], "*/*.json")))
     with open("config.json") as f:
         config = json.load(f)
     crop_dict = config["Annotation_info"]["crop_dict"]
