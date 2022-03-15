@@ -3,6 +3,7 @@
     "Width": 256,
     "Height": 256,
     "Prepared_Data_Path": "../Prepared_Data/train",
+    "Prepared_Csv_Path" : "../Prepared_Data",
     "train_Config": {
         "batch_size": 32,
         "lr": 0.0001,
