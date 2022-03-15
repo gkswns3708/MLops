@@ -6,7 +6,7 @@ from glob import glob
 
 # 필요한 directory를 만들어주는 Utils
 def make_necessary_dir(Prepared_Data_Path: str, Model_Save_Path: str):
-    """_summary_
+    """필요한 directory를 만들어주는 함수.
 
     Args:
         Prepared_Data_Path (str)): 전처리된 Data들이 저장될 Path
@@ -17,7 +17,7 @@ def make_necessary_dir(Prepared_Data_Path: str, Model_Save_Path: str):
 
 
 def get_image_json_path(Raw_Data_Path: str) -> list:
-    """_summary_
+    """label을 얻기 위한 json_path 얻는 함수
 
     Args:
         Raw_Data_Path (str): Raw Data들이 있는 Path
@@ -35,13 +35,14 @@ def get_image_json_path(Raw_Data_Path: str) -> list:
 
     return raw_image_json
 
-def make_label_encoder_decoder(config : dict) -> None:
+
+def make_label_encoder_decoder(config: dict) -> None:
     """config_train.json에 들어가는 Annotation_info를 만들어주는 함수.
 
     Args:
         config (dict): Config dict
     """
-    path_list = sorted(glob(osp.join(config['Prepared_Data_Path'], "*/*.json")))
+    path_list = sorted(glob(osp.join(config["Prepared_Data_Path"], "*/*.json")))
     with open("config.json") as f:
         config = json.load(f)
     crop_dict = config["Annotation_info"]["crop_dict"]
@@ -53,23 +54,13 @@ def make_label_encoder_decoder(config : dict) -> None:
     all_label_set = set()
     for idx, path in enumerate(path_list):
         now_json = json.load(open(path, "r"))
-        now_crop = crop_dict[str(now_json["annotations"]["crop"])]
-        now_disease = disease_dict[str(now_json["annotations"]["disease"])]
-        now_risk = risk_dict[str(now_json["annotations"]["risk"])]
-        now_area = area_dict[str(now_json["annotations"]["area"])]
-        now_grow = grow_dict[str(now_json["annotations"]["grow"])]
-        label_set.add(now_crop + "_" + now_disease + "_" + now_risk)
-        all_label_set.add(
-            now_crop
-            + "_"
-            + now_disease
-            + "_"
-            + now_risk
-            + "_"
-            + now_area
-            + "_"
-            + now_grow
-        )
+        crop = crop_dict[str(now_json["annotations"]["crop"])]
+        disease = disease_dict[str(now_json["annotations"]["disease"])]
+        risk = risk_dict[str(now_json["annotations"]["risk"])]
+        area = area_dict[str(now_json["annotations"]["area"])]
+        grow = grow_dict[str(now_json["annotations"]["grow"])]
+        label_set.add(crop + "_" + disease + "_" + risk)
+        all_label_set.add(crop + "_" + disease + "_" + risk + "_" + area + "_" + grow)
     label_encoder = {key: idx for idx, key in enumerate(sorted(label_set))}
     label_decoder = {val: key for key, val in label_encoder.items()}
     all_label_encoder = {key: idx for idx, key in enumerate(sorted(all_label_set))}
@@ -82,23 +73,33 @@ def make_label_encoder_decoder(config : dict) -> None:
         f.write(json.dumps(config, ensure_ascii=False))
 
 
-# 5000장 44초 정도 걸림 (512, 384) -> (256,256)
-def get_Resized_Image_Dataset(raw_image_json: list) -> None:
-    for (now_image, now_json) in raw_image_json:
-        name = str(len(glob(osp.join(save_path, "*"))) + 1)
-        img = cv2.imread(now_image)
-        now_json = json.load(open(now_json, "r"))
-        img = cv2.resize(img, dsize=(width, height), interpolation=cv2.INTER_AREA)
+def get_Resized_Image_Dataset(config: dict) -> None:
+    # 5762장 Resized 실행시 1분 50분 정도 Local 환경에서 소요 됨.
+    Raw_Data_Path = config["Raw_Data_Path"]
+    Raw_Data_Path_list = sorted(glob(osp.join(Raw_Data_Path, "*")))
+    print(len(Raw_Data_Path_list))
+    for now_dir_path in Raw_Data_Path_list:
+        data_num = now_dir_path.split("/")[-1]
+        now_image_path = osp.join(now_dir_path, f"{data_num}.jpg")
+        now_json_path = osp.join(now_dir_path, f"{data_num}.json")
+        name = str(len(glob(osp.join(config["Prepared_Data_Path"], "*"))) + 1)
+        img = cv2.imread(now_image_path)
+        img = cv2.resize(
+            img, dsize=(config["Width"], config["Height"]), interpolation=cv2.INTER_AREA
+        )
+        now_json = json.load(open(now_json_path, "r"))
 
         img = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
-        tmp_save_path = osp.join(save_path, name)
-        # Save File
-        if osp.isdir(tmp_save_path) == False:
-            os.makedirs(tmp_save_path, exist_ok=True)
+        Data_save_path = osp.join(config["Prepared_Data_Path"], name)
 
-        cv2.imwrite(osp.join(tmp_save_path, name + ".jpg"), img)
-        with open(osp.join(tmp_save_path, name + ".json"), "w") as f:
+        # Save File
+        if osp.isdir(Data_save_path) == False:
+            os.makedirs(Data_save_path, exist_ok=True)
+
+        cv2.imwrite(osp.join(Data_save_path, name + ".jpg"), img)
+        with open(osp.join(Data_save_path, name + ".json"), "w") as f:
             json.dump(now_json, f, indent=4)
+
 
 
 def make_label_encoder_decoder(save_path):
@@ -107,23 +108,13 @@ def make_label_encoder_decoder(save_path):
     all_label_set = set()
     for idx, path in enumerate(path_list):
         now_json = json.load(open(path, "r"))
-        now_crop = crop_dict[now_json["annotations"]["crop"]]
-        now_disease = disease_dict[now_json["annotations"]["disease"]]
-        now_risk = risk_dict[now_json["annotations"]["risk"]]
-        now_area = area_dict[now_json["annotations"]["area"]]
-        now_grow = grow_dict[now_json["annotations"]["grow"]]
-        label_set.add(now_crop + "_" + now_disease + "_" + now_risk)
-        all_label_set.add(
-            now_crop
-            + "_"
-            + now_disease
-            + "_"
-            + now_risk
-            + "_"
-            + now_area
-            + "_"
-            + now_grow
-        )
+        crop = crop_dict[now_json["annotations"]["crop"]]
+        disease = disease_dict[now_json["annotations"]["disease"]]
+        risk = risk_dict[now_json["annotations"]["risk"]]
+        area = area_dict[now_json["annotations"]["area"]]
+        grow = grow_dict[now_json["annotations"]["grow"]]
+        label_set.add(crop + "_" + disease + "_" + risk)
+        all_label_set.add(crop + "_" + disease + "_" + risk + "_" + area + "_" + grow)
     label_encoder = {key: idx for idx, key in enumerate(sorted(label_set))}
     label_decoder = {val: key for key, val in label_encoder.items()}
     all_label_encoder = {key: idx for idx, key in enumerate(sorted(all_label_set))}
@@ -131,56 +122,88 @@ def make_label_encoder_decoder(save_path):
     return label_encoder, label_decoder, all_label_encoder, all_label_decoder
 
 
-def Set_Dataset_CSV(path):
-    # dict crop_dict들이 필요함.
-    # dict를 이용해 csv를 만들 수 있음.
+def Set_Dataset_CSV(config):
+    """train할 때 사용하는 Dataset의 정보를 담고 있는 CSV 생성 함수
+
+    Args:
+        config (dict): csv 파일을 만드는데 사용되는 config를 포함하고 있는 config dict
+    """
     data = {
-        'name' : [],
-        'path' : [],
-        'Described_label' : [], # 0
-        'Described_delabel' : [], # '고추_고추탄저병-1_중기'
-        'Described_all_label' : [], # 0,
-        'Described_all_delabel' : [], # '고추_고추탄저병-1_중기_열매_착화/과실기',
-
-        'label' : [], # 0,
-        'delabel' : [], # '1_00_0',
-        'all_label' : [], # 0,
-        'all_delabel' : [], #'1_00_0_3_11',
+        "name": [],
+        "path": [],
+        "Described_label": [],  # 0
+        "Described_delabel": [],  # '고추_고추탄저병-1_중기'
+        "Described_all_label": [],  # 0,
+        "Described_all_delabel": [],  # '고추_고추탄저병-1_중기_열매_착화/과실기',
+        "label": [],  # 0,
+        "delabel": [],  # '1_00_0',
+        "all_label": [],  # 0,
+        "all_delabel": [],  #'1_00_0_3_11',
     }
-    path = sorted(glob(osp.join(path, '*')))
+    path = sorted(glob(osp.join(config["Prepared_Data_Path"], "*")))
     for now_path in path:
-        now_name = now_path.split('/')[-1]
-        now_image_path = osp.join(now_path,now_name+'.jpg')
-        now_json_path = osp.join(now_path,now_name+'.json')
-        now_json = json.load(open(now_json_path,'r'))
-        now_crop = now_json['annotations']['crop']
-        now_disease = now_json['annotations']['disease']
-        now_risk = now_json['annotations']['risk']
-        now_area = now_json['annotations']['area']
-        now_grow = now_json['annotations']['grow']
+        if now_path in ".json":
+            continue
+        name = now_path.split("/")[-1]
+        image_path = osp.join(now_path, name + ".jpg")
+        json_path = osp.join(now_path, name + ".json")
+        now_json = json.load(open(json_path, "r"))
+        # TODO : 여기 다 뜯어 고치고 싶네 어떻게 안되나...?
+        crop = str(now_json["annotations"]["crop"])
+        disease = now_json["annotations"]["disease"]
+        risk = str(now_json["annotations"]["risk"])
+        area = str(now_json["annotations"]["area"])
+        grow = str(now_json["annotations"]["grow"])
 
-        Described_delabel = f'{crop_dict[now_crop]}_{disease_dict[now_disease]}_{risk_dict[now_risk]}'
-        Described_label = label_encoder[Described_delabel]
-        Described_all_delabel = f'{crop_dict[now_crop]}_{disease_dict[now_disease]}_{risk_dict[now_risk]}_{area_dict[now_area]}_{grow_dict[now_grow]}'
-        Described_all_label = all_label_encoder[Described_all_delabel]
+        human_label_encoder = config["Annotation_info"]["human_label_encoder"]
+        human_all_label_encoder = config["Annotation_info"]["human_all_label_encoder"]
+        label_encoder = config["Annotation_info"]["label_encoder"]
+        all_label_encoder = config["Annotation_info"]["all_label_encoder"]
 
-        delabel = f'{now_crop}_{now_disease}_{now_risk}'
-        label = dataset_label_encoder[delabel]
-        all_delabel = f'{now_crop}_{now_disease}_{now_risk}_{now_area}_{now_grow}'
-        all_label = dataset_all_label_encoder[all_delabel]
+        crop_dict = config["Annotation_info"]["crop_dict"]
+        disease_dict = config["Annotation_info"]["disease_dict"]
+        risk_dict = config["Annotation_info"]["risk_dict"]
+        grow_dict = config["Annotation_info"]["grow_dict"]
+        area_dict = config["Annotation_info"]["area_dict"]
 
-        data['name'].append(now_name)
-        data['path'].append(now_path)
+        Described_delabel = (
+            f"{crop_dict[crop]}_{disease_dict[disease]}_{risk_dict[risk]}"
+        )
+        Described_label = human_label_encoder[Described_delabel]
+        Described_all_delabel = f"{crop_dict[crop]}_{disease_dict[disease]}_{risk_dict[risk]}_{area_dict[area]}_{grow_dict[grow]}"
+        Described_all_label = human_all_label_encoder[Described_all_delabel]
 
-        data['Described_label'].append(Described_label)
-        data['Described_delabel'].append(Described_delabel)
-        data['Described_all_label'].append(Described_all_label)
-        data['Described_all_delabel'].append(Described_all_delabel)
-
-        data['label'].append(label)
-        data['delabel'].append(delabel)
-        data['all_label'].append(all_label)
-        data['all_delabel'].append(all_delabel)
+        delabel = f"{crop}_{disease}_{risk}"
+        label = label_encoder[delabel]
+        all_delabel = f"{crop}_{disease}_{risk}_{area}_{grow}"
+        all_label = all_label_encoder[all_delabel]
+        
+        variable_names = [
+            "name",
+            "path",
+            "Described_label",
+            "Described_delabel",
+            "Described_all_label",
+            "Described_all_delabel",
+            "label",
+            "delabel",
+            "all_label",
+            "all_delabel",
+        ]
+        variables = [
+            name,
+            now_path,
+            Described_label,
+            Described_delabel,
+            Described_all_label,
+            Described_all_delabel,
+            label,
+            delabel,
+            all_label,
+            all_delabel,
+        ]
+        for variable_name, variable in zip(variable_names, variables):
+            data[f"{variable_name}"].append(variable)
 
     df = pd.DataFrame(data)
-    df.to_csv(osp.join('/content','train.csv'))
+    df.to_csv(osp.join(config["Prepared_Csv_Path"], "train.csv"))

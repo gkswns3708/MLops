@@ -7,3 +7,5 @@
 /practice.ipynb
 /.gitignore
 /__pycache__
+train/Visualize.ipynb
+train/data_loader/__pycache__/*
