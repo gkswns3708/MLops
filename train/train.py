@@ -61,10 +61,15 @@ def main(config):
 
         device, _ = prepare_device(config['n_gpu'])
         model = model.to(device)
-
+                                                                                               
         # TODO : 다양한 loss function이 어떻게 만들어지고 정의되는지, Custom loss function에 대해 공부해보기
         criterion = getattr(module_loss, config['loss']['type'])
+        metrics = [getattr(module_metric, met) for met in config['metrics']]
 
+        trainable_params = filter(lambda p: p.requires_grad, model.parameters())
+        optimizer = config.init_obj('optimizer', torch.optim, trainable_params)
+        lr_scheduler = config.init_obj('lr_scheduler', torch.optim.lr_scheduler, optimizer)
+        
 
 # TODO :  Preprocess 절차를 생략할지 말지 정하는 config 와 argparser가 있으면 좋을 듯 하다.
 if __name__ == "__main__":
