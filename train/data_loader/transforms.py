@@ -26,3 +26,4 @@ def transforms_select(method, default, mean=MEAN_IMAGENET, std=STD_IMAGENET):
         ),
         "train_deault_transform": A.Compose([ToTensorV2(p=1.0)]),
     }
+    return lib[method], lib[default]

@@ -17,6 +17,8 @@ from parse_config import config_parser
 
 import data_loader.data_loaders as Custom_loader
 import data_loader.transforms as Custom_transforms
+import model.model as module_arch
+from utils import prepare_device
 
 import torch
 import torch.nn as nn
@@ -48,11 +50,20 @@ def main(config):
         )()
         # TODO config.json에 trainsform_name란을 만들면 된다(type과 args를 추가)
         Dataloader = config.init_obj(
-            "Dataset",
+            "data_loaders",
             Custom_loader,
             train_transform=train_transform,
             default_transform=default_transform,
         )
+        model = config.init_obj('arch', module_arch)
+        # TODO : logger가 현재 어떤 역할을 하는지 알아보기.
+        logger.info(model) 
+
+        device, _ = prepare_device(config['n_gpu'])
+        model = model.to(device)
+
+        # TODO : 다양한 loss function이 어떻게 만들어지고 정의되는지, Custom loss function에 대해 공부해보기
+        criterion = getattr(module_loss, config['loss']['type'])
 
 
 # TODO :  Preprocess 절차를 생략할지 말지 정하는 config 와 argparser가 있으면 좋을 듯 하다.
