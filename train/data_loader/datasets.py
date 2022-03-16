@@ -46,7 +46,7 @@ class CustomDataset(Dataset):
         else:
             return {"image": image}
 
-class BasicDataset(Dataset):
+class BaseDataset(Dataset):
     def __init__(self, dataset_df, transform=None):
         super().__init__()
         assert transform is not None, "Set the transform on train set"
@@ -86,6 +86,6 @@ class CropDataset():
     def split_validation(self, valid_split_ratio):
         # TODO : Stratify의 처리가 제대로되는지 확인하기
         df_train, df_val = train_test_split(self.dataset_df, test_size=valid_split_ratio, random_state=42, stratify=self.df['label'].to_numpy())
-        train_dataset = BasicDataset(df_train, transform=self.transform)
-        val_dataset = BasicDataset(df_val, transform=self.default_transform)
+        train_dataset = BaseDataset(df_train, transform=self.transform)
+        val_dataset = BaseDataset(df_val, transform=self.default_transform)
         return train_dataset, val_dataset

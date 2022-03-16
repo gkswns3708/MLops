@@ -3,9 +3,11 @@
 /Raw_Data
 /Test_Data
 /train.csv
+/train/config_train.json
 /*.json
 /practice.ipynb
 /.gitignore
 /__pycache__
 train/Visualize.ipynb
 train/data_loader/__pycache__/*
+/base/__pycache__

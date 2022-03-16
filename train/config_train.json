@@ -2,8 +2,16 @@
     "Raw_Data_Path": "../Raw_Data/train",
     "Width": 256,
     "Height": 256,
+    "n_gpu" : 1,
     "Prepared_Data_Path": "../Prepared_Data/train",
     "Prepared_Csv_Path" : "../Prepared_Data",
+    "arch": {
+        "type": "CNN",
+        "args": {
+            "class_n" : 25,
+            "rate" : 0.1
+        }
+    },
     "train_Config": {
         "batch_size": 32,
         "lr": 0.0001,
@@ -19,7 +27,19 @@
             "default": "train_deault_transform"
         }
     },
-    "Data_Loader": "Base_DataLoader",
+    "Data_Loader": {
+        "type": "CropDataLoader",
+        "args": {
+            "data_dir": "../Prepared_Data",
+            "batch_size": 4,
+            "shuffle": true,
+            "validation_split": 0.2,
+            "num_workers": 2,
+            "submit": false,
+            "sampler": "over",
+            "is_main": true 
+        }
+    },
     "transforms_name": {
         "type": "train_transform",
         "args": {
