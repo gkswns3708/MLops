@@ -1,4 +1,5 @@
 {
+    "name": "Resnet50+BaseFlipAug",
     "Raw_Data_Path": "../Raw_Data/train",
     "Width": 256,
     "Height": 256,
@@ -33,15 +34,15 @@
             "data_dir": "../Prepared_Data",
             "batch_size": 4,
             "shuffle": true,
-            "validation_split": 0.2,
+            "valid_split_ratio": 0.2,
             "num_workers": 2,
             "submit": false,
             "sampler": "over",
-            "is_main": true 
+            "is_main": false 
         }
     },
-    "transforms_name": {
-        "type": "train_transform",
+    "transform_name": {
+        "type": "transforms_select",
         "args": {
             "method": "train_Filp_transform",
             "default": "train_deault_transform"
@@ -62,6 +63,22 @@
         "args": {
             "step_size": 50,
             "gamma": 0.1
+        }
+    },
+    "trainer": {
+        "epochs": 20,
+        "save_dir": "saved/",
+        "save_period": 1,
+        "verbosity": 2,
+        "monitor": "min val_loss",
+        "early_stop": 5,
+        "tensorboard": false
+    },
+    "wandb": {
+        "use": false,
+        "args": {
+            "project": "image-classification",
+            "entity": "hj_ai"
         }
     },
     "Annotation_info": {

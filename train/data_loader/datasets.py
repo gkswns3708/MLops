@@ -5,6 +5,8 @@ import numpy
 import torch.nn as nn
 from torch.utils.data import Dataset
 from sklearn.model_selection import train_test_split
+import os
+import pandas as pd
 
 
 class CustomDataset(Dataset):
@@ -69,8 +71,8 @@ class CropDataset():
     def __init__(self, transform=None, default_transform=None, config=None):
         super().__init__()
         # TODO : 다양한 assert문 utils로 추가해놓기 (params : variable name)
-        assert trsfm is not None, "Set the transform on train set"
-        assert defalut_trsfm is not None, "Set the default transform"
+        assert transform is not None, "Set the transform on train set"
+        assert default_transform is not None, "Set the default transform"
 
         self.transform = transform
         self.default_transform = default_transform
@@ -78,14 +80,14 @@ class CropDataset():
         self.df_path = os.path.join(self.dir_path, 'train.csv')
         self.img_dir_path = config['Prepared_Data_Path']
 
-        self.dataset_df = pd.read_csv(self.path)
+        self.dataset_df = pd.read_csv(os.path.join(config['Prepared_Csv_Path'], 'train.csv'))
         # TODO : Class Imbalance 문제를 해결하기 위해 각 class weight를 지정하는 코드 Cross_Entropy를 사용할 때 사용할 듯
         # self.class_weight = self._get_class_weight() # 학습 고도화를 위한 각 class Imbalance 문제를 위한 코드
 
 
     def split_validation(self, valid_split_ratio):
         # TODO : Stratify의 처리가 제대로되는지 확인하기
-        df_train, df_val = train_test_split(self.dataset_df, test_size=valid_split_ratio, random_state=42, stratify=self.df['label'].to_numpy())
+        df_train, df_val = train_test_split(self.dataset_df, test_size=valid_split_ratio, random_state=42, stratify=self.dataset_df['label'].to_numpy())
         train_dataset = BaseDataset(df_train, transform=self.transform)
         val_dataset = BaseDataset(df_val, transform=self.default_transform)
         return train_dataset, val_dataset

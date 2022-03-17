@@ -22,7 +22,7 @@ class CropDataLoader:
     ):
         # TODO : 이거 eval보단 test로 Path를 json에 지정하는게 좋을 듯.
         # TODO : inference를 위한 도구(data_loader)도 필요한 지 고민하기.
-
+        # TODO : is_main 의미 파악하기
         self.data_dir = data_dir  # config에서 Prepared_Data까지만 허용 됨.
         self.shuffle = shuffle
         self.train_dir = os.path.join(self.data_dir, "train")
@@ -40,13 +40,13 @@ class CropDataLoader:
         print(f"num_workers : {num_workers}")
 
         self.base_dataset = CropDataset(
-            transfrom=self.transform,
+            transform=self.transform,
             default_transform=self.default_transform,
             config=config,
         )
 
         assert 1 >= valid_split_ratio >= 0, "Set the valid_split_ratio correctly(1>= p >=0)"
-
+        assert config is not None, "Set the configure file on config.json"
         self.train_dataset, self.valid_dataset = self.base_dataset.split_validation(valid_split_ratio)
 
         # TODO : Oversampling, normal Sampling 구현
