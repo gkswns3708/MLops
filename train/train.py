@@ -6,10 +6,11 @@ import data_loader.data_loaders_crop as Custom_loader
 import data_loader.transforms as Custom_transforms
 import model.loss as module_loss
 import model.metric as module_metric
-import model as module_arch
+import model.model as module_arch
 from parse_config import ConfigParser
 from trainer import Trainer
-from utils import prepare_device
+from utils import *
+import cv2
 import wandb
 
 
@@ -23,12 +24,12 @@ np.random.seed(SEED)
 def main(config):
     # config_parser는 말 그대로 dict type이 맞음 []로 접근할 수 있음.
     def _main(config):
+        logger = config.get_logger('train')
         # config = json.load(open('./config_train.json', 'r'))
         if config["is_Preprocessing"]:
             utils.raw_image_json = utils.get_image_json_path(config["Raw_Data_Path"])
             utils.get_Resized_Image_Dataset(config)
-            utils.make_label_encoder_decoder(config)
-            utils.Set_Dataset_CSV(config["Prepared_Data_Path"])
+            utils.Set_Dataset_CSV(config)
 
         # Training Process with Config Parser
         train_transform, default_transform = config.init_ftn(
@@ -42,6 +43,9 @@ def main(config):
             default_transform=default_transform,
             config=config,
         )
+
+        train_data_loader, valid_data_loader = Dataloader.split_validation()
+
         model = config.init_obj('arch', module_arch)
         # TODO : logger가 현재 어떤 역할을 하는지 알아보기.
         logger.info(model) 

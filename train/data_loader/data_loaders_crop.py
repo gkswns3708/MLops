@@ -72,14 +72,13 @@ class CropDataLoader:
                 numworkers=num_workers,
                 pin_memory=True,
             )
-        else:
-            valid_dataloader = DataLoader(
-                self.valid_dataset,
-                batch_size,
-                shuffle=self.shuffle,
-                num_workers=num_workers,
-                pin_memory=True,
-            )
+        self.valid_dataloader = DataLoader(
+            self.valid_dataset,
+            batch_size,
+            shuffle=self.shuffle,
+            num_workers=num_workers,
+            pin_memory=True,
+        )
         # TODO : inference를 위한 Dataloader도 필요한가 고민하기 -> 아마 필요 없을 거 같긴함
         # 그냥 model(image)하면 나오는 값으로 학습하면 되지 않을까 싶음.
         # if submit:

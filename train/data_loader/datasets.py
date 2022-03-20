@@ -59,10 +59,13 @@ class BaseDataset(Dataset):
         return len(self.dataset_df)
 
     def __getitem__(self, idx):
-        image = cv2.imread(self.df['path'].iloc[idx])
-        image = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
-        image = self.transform(image=image)['image']
-        return image, torch.tensor(self.df['label'].iloc[idx])
+        # TODO : Image Path를 csv 파일에 추가하는게 좋은 선택지 같음.
+        self.dataset_df['image_path']
+        image = cv2.imread(self.dataset_df['image_path'].iloc[idx])
+        # TODO : TOTensorV2를 쓰면 numpy 채널 축도 변하고 ToTensor의 기능을 포함함.
+        # image = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
+        image = self.transform(image=image)['image'].float()
+        return image, torch.tensor(self.dataset_df['label'].iloc[idx])
     
     def get_labels(self):
         return self.dataset_df['label'].iloc[:]

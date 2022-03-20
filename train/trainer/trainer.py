@@ -15,6 +15,7 @@ class Trainer(BaseTrainer):
         self.config = config
         self.device = device
         self.data_loader = train_data_loader
+        self.device = device
         if len_epoch is None:
             # 뭔가 assert 문으로 처리해도 될 듯 함.
             self.len_epoch = len(self.data_loader)
@@ -24,14 +25,14 @@ class Trainer(BaseTrainer):
         self.valid_data_loader = valid_data_loader
         self.do_validation = self.valid_data_loader is not None
         self.lr_scheduler = lr_scheduler
-        self.log_step = int(np.sqrt(data_loader.batch_size)) 
+        self.log_step = 100
         # log를 batch_size의 제곱근마다 해라?
         # TODO : log_step 국룰 찾아보기.
 
         # TODO : MetricTracker에 대한 정확한 이해
         # 현재의는 loss + self.metric_ftns(acc, f1)들의 평균 total을 tracking하는 class
         self.train_metrics = MetricTracker('loss', *[m.__name__ for m in self.metric_ftns], writer=self.writer)
-        self.valid_metircs = MetricTracker('loss', *[m.__name__ for m in self.metric_ftns], writer=self.writer)
+        self.valid_metrics = MetricTracker('loss', *[m.__name__ for m in self.metric_ftns], writer=self.writer)
         
     def _train_epoch(self, epoch):
         """
@@ -69,7 +70,9 @@ class Trainer(BaseTrainer):
                 self.train_metrics.update(met.__name__, met(output, target))
             
             if batch_idx % self.log_step == 0:
-                self.logger.debug('Train Epoch : {} {} Loss :{:.6f}'.foramt(
+                # TODO :현재는 logger로 만들어져 있지만 logger가 아니라 Tqdm으로 했으면 더 좋지 않았을까 싶음.
+                # TODO :logger에 정확한 기능이 무엇인지 공부해야할 듯 함.
+                self.logger.debug('Train Epoch : {} {} Loss :{:.6f}'.format(
                     epoch,
                     self._progress(batch_idx),
                     loss.detach()
@@ -83,7 +86,7 @@ class Trainer(BaseTrainer):
         log = self.train_metrics.result()
 
         if self.do_validation:
-            val_log = self.valid_epoch(epoch)
+            val_log = self._valid_epoch(epoch)
             log.update(**{'val_' + metric: value for metric, value in val_log.items()})
             if self.cfg_wandb['use']:
                 wandb.log.update(**{'val_' + metric: value for metric, value in val_log.items()}, step=example_ct)
@@ -102,10 +105,10 @@ class Trainer(BaseTrainer):
         return : A log that contains information abuout validation
         """
         self.model.eval()
-        self.valid_metircs.reset()
+        self.valid_metrics.reset()
         with torch.no_grad():
             for batch_idx, (data, target) in enumerate(self.valid_data_loader):
-                data, target = data.to(self.device), target.to(device)
+                data, target = data.to(self.device), target.to(self.device)
 
                 output = self.model(data)
                 if self.model.__class__.__name__ == "SomethingSpecial":
@@ -117,15 +120,16 @@ class Trainer(BaseTrainer):
                 self.valid_metrics.update('loss', loss.detach())
                 for met in self.metric_ftns:
                     self.valid_metrics.update(met.__name__, met(output, target))
-                # TODO : 아래의 코드 존재 이유 알아내기
+                # TODO : 아래의 코드 존재 이유 알아내기 아마 tensorboard때문일 듯.
                 # self.writer.add_image('input', make_grid(data.cpu(), nrow=8, normalize=True))
         # TODO : logging tool은 1개로 종합하는게 좋은가? 그럼 언떤걸로 종합하는게 좋을지 고민하기. 상황과 장비 등등을 고려 한 선택
 
+        # TODO : 아래 코드 어떻게 할 지 고민하기
         # 갑자기 tensorboard가 나온 이유는 template에서 tensorboard를 쓰도록 basetrainer에 writer를 지정해놓음.
         # 바꾸기에는 코드가 너무 좋아서 tensorboard로 진행해볼까
         # add fistogram of model parameters to the tensorboard
-        for name, p in self.model.named_parameters():
-            self.writer.add_histrogram(name, p, bins='auto')
+        # for name, p in self.model.named_parameters():
+        #     self.writer.add_histrogram(name, p, bins='auto')
         return self.valid_metrics.result()
         
     def _progress(self, batch_idx):

@@ -1,5 +1,8 @@
-import json
 import os
+import cv2
+import json
+import torch
+import pandas as pd
 import os.path as osp
 # TODO : pathlib 이친구 뭐하는 친구인지 알아내기
 from pathlib import Path
@@ -104,7 +107,9 @@ def get_Resized_Image_Dataset(config: dict) -> None:
 
 
 
-def make_label_encoder_decoder(save_path):
+# TODO : 이 친구는 Build할 때만 필요했던 친구(config 제작할 때) 이런 경우에는 git에서 삭제하나?
+def make_label_encoder_decoder(config):
+    save_path = config['Prepared_Data_Path']
     path_list = sorted(glob(osp.join(save_path, "*/*.json")))
     label_set = set()
     all_label_set = set()
@@ -133,6 +138,7 @@ def Set_Dataset_CSV(config):
     data = {
         "name": [],
         "path": [],
+        "image_path" : [],
         "Described_label": [],  # 0
         "Described_delabel": [],  # '고추_고추탄저병-1_중기'
         "Described_all_label": [],  # 0,
@@ -183,6 +189,7 @@ def Set_Dataset_CSV(config):
         variable_names = [
             "name",
             "path",
+            "image_path",
             "Described_label",
             "Described_delabel",
             "Described_all_label",
@@ -195,6 +202,7 @@ def Set_Dataset_CSV(config):
         variables = [
             name,
             now_path,
+            image_path,
             Described_label,
             Described_delabel,
             Described_all_label,

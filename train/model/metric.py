@@ -2,7 +2,7 @@ from numpy.lib.function_base import average
 import torch
 from torchmetrics.functional import f1 as _f1
 
-def accuarcy(output, target):
+def accuracy(output, target):
     # TODO : 이거 왜 torch.no_grad 썼는지 이해하기.
     with torch.no_grad():
         # TODO : 이거 왜 dim 1인지 이해하기. 아마 이런걸 잘 생각해야 좋은 ML engineer일 듯 함.
