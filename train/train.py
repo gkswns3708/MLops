@@ -1,31 +1,18 @@
-import numpy as np
-import pandas as pd
-import cv2
-import random
-import os
-import json
-
-from tqdm import tqdm
-from glob import glob
-
-import utils
-
-# temp
-from pprint import pprint
-from collections import Counter
-from parse_config import config_parser
-
-import data_loader.data_loaders as Custom_loader
-import data_loader.transforms as Custom_transforms
-import model.model as module_arch
-from utils import prepare_device
-
+import argparse
+import collections
 import torch
-import torch.nn as nn
-from torchvision import models
-from torch.utils.data import Dataset
-from sklearn.metrics import f1_score
-from sklearn.model_selection import StratifiedKFold  # 구현 안할 듯 함. Inference 속도 Issue
+import numpy as np
+import data_loader.data_loaders_crop as Custom_loader
+import data_loader.transforms as Custom_transforms
+import model.loss as module_loss
+import model.metric as module_metric
+import model.model as module_arch
+from parse_config import ConfigParser
+from trainer import Trainer
+from utils import *
+import cv2
+import wandb
+
 
 SEED = 123
 torch.manual_seed(SEED)
@@ -37,12 +24,12 @@ np.random.seed(SEED)
 def main(config):
     # config_parser는 말 그대로 dict type이 맞음 []로 접근할 수 있음.
     def _main(config):
+        logger = config.get_logger('train')
         # config = json.load(open('./config_train.json', 'r'))
         if config["is_Preprocessing"]:
             utils.raw_image_json = utils.get_image_json_path(config["Raw_Data_Path"])
             utils.get_Resized_Image_Dataset(config)
-            utils.make_label_encoder_decoder(config)
-            utils.Set_Dataset_CSV(config["Prepared_Data_Path"])
+            utils.Set_Dataset_CSV(config)
 
         # Training Process with Config Parser
         train_transform, default_transform = config.init_ftn(
@@ -50,11 +37,15 @@ def main(config):
         )()
         # TODO config.json에 trainsform_name란을 만들면 된다(type과 args를 추가)
         Dataloader = config.init_obj(
-            "data_loaders",
+            "Data_Loader",
             Custom_loader,
-            train_transform=train_transform,
+            transform=train_transform,
             default_transform=default_transform,
+            config=config,
         )
+
+        train_data_loader, valid_data_loader = Dataloader.split_validation()
+
         model = config.init_obj('arch', module_arch)
         # TODO : logger가 현재 어떤 역할을 하는지 알아보기.
         logger.info(model) 
@@ -69,6 +60,23 @@ def main(config):
         trainable_params = filter(lambda p: p.requires_grad, model.parameters())
         optimizer = config.init_obj('optimizer', torch.optim, trainable_params)
         lr_scheduler = config.init_obj('lr_scheduler', torch.optim.lr_scheduler, optimizer)
+
+        trainer = Trainer(model, criterion, metrics, optimizer,
+                    config = config,
+                    device=device,
+                    train_data_loader=train_data_loader,
+                    valid_data_loader=valid_data_loader,
+                    lr_scheduler=lr_scheduler)
+
+        trainer.train()
+    
+    if config['wandb']['use']:
+        with wandb.init(name=config['name'], project=config['wandb']['args']['project'],
+                        entity=config['wandb']['args']['entity'], config=config):
+            wandb_config = wandb.config
+            _main(config)
+    else:
+        _main(config)
         
 
 # TODO :  Preprocess 절차를 생략할지 말지 정하는 config 와 argparser가 있으면 좋을 듯 하다.

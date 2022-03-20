@@ -3,7 +3,7 @@ import torch.nn as nn
 import torch.nn.functional as F
 import torchvision
 import torchvision.models as models
-from base import Basemodel
+# from base import Basemodel
 
 class CNN(nn.Module):
     """

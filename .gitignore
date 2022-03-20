@@ -11,3 +11,4 @@
 train/Visualize.ipynb
 train/data_loader/__pycache__/*
 /base/__pycache__
+/train/saved
