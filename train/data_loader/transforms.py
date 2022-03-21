@@ -19,8 +19,7 @@ def transforms_select(method, default, mean=MEAN_IMAGENET, std=STD_IMAGENET):
                     ],
                     p=0.75,
                 ),
-                A.RandomBrightness(p=0.5, limit=(-0.2, 0.25)),
-                A.RandomContrast(p=0.5, limit=(-0.25, 0.25)),
+                A.RandomBrightnessContrast(brightness_limit=0.25, contrast_limit=0.25, p=1),
                 ToTensorV2(p=1.0),  # dtype float32, transpose 한번에
             ]
         ),
