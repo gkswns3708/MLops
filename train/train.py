@@ -1,17 +1,18 @@
+import cv2
+import utils 
+import torch
+import wandb
 import argparse
 import collections
-import torch
 import numpy as np
 import data_loader.data_loaders_crop as Custom_loader
 import data_loader.transforms as Custom_transforms
 import model.loss as module_loss
 import model.metric as module_metric
 import model.model as module_arch
+
 from parse_config import ConfigParser
 from trainer import Trainer
-from utils import *
-import cv2
-import wandb
 
 
 SEED = 123
@@ -32,6 +33,7 @@ def main(config):
             utils.Set_Dataset_CSV(config)
 
         # Training Process with Config Parser
+        # TODO : logger가 어떤 transform이 붙었는지 확인해야하지 않나?
         train_transform, default_transform = config.init_ftn(
             "transform_name", Custom_transforms
         )()
@@ -47,10 +49,11 @@ def main(config):
         train_data_loader, valid_data_loader = Dataloader.split_validation()
 
         model = config.init_obj('arch', module_arch)
-        # TODO : logger가 현재 어떤 역할을 하는지 알아보기.
+        # TODO : logger가 현재 어떤 역할을 하는지 알아보기. -> 해결됨
+        # TODO : model에 대한 정보도 log로 찍고 싶긴 함.
         logger.info(model) 
 
-        device, _ = prepare_device(config['n_gpu'])
+        device, _ = utils.prepare_device(config['n_gpu'])
         model = model.to(device)
                                                                                                
         # TODO : 다양한 loss function이 어떻게 만들어지고 정의되는지, Custom loss function에 대해 공부해보기
@@ -80,37 +83,20 @@ def main(config):
         
 
 # TODO :  Preprocess 절차를 생략할지 말지 정하는 config 와 argparser가 있으면 좋을 듯 하다.
-if __name__ == "__main__":
-    args = argparse.ArgumentParser(description="PyTorch Template")
-    args.add_argument(
-        "-c",
-        "--config",
-        default=None,
-        type=str,
-        help="config file path (default: None)",
-    )
-    args.add_argument(
-        "-r",
-        "--resume",
-        default=None,
-        type=str,
-        help="path to latest checkpoint (default: None)",
-    )
-    args.add_argument(
-        "-d",
-        "--device",
-        default=None,
-        type=str,
-        help="indices of GPUs to enable (default: all)",
-    )
+if __name__ == '__main__':
+    args = argparse.ArgumentParser(description='PyTorch Template')
+    args.add_argument('-c', '--config', default=None, type=str,
+                      help='config file path (default: None)')
+    args.add_argument('-r', '--resume', default=None, type=str,
+                      help='path to latest checkpoint (default: None)')
+    args.add_argument('-d', '--device', default=None, type=str,
+                      help='indices of GPUs to enable (default: all)')
 
     # custom cli options to modify configuration from default values given in json file.
-    CustomArgs = collections.namedtuple("CustomArgs", "flags type target")
+    CustomArgs = collections.namedtuple('CustomArgs', 'flags type target')
     options = [
-        CustomArgs(["--lr", "--learning_rate"], type=float, target="optimizer;args;lr"),
-        CustomArgs(
-            ["--bs", "--batch_size"], type=int, target="data_loader;args;batch_size"
-        ),
+        CustomArgs(['--lr', '--learning_rate'], type=float, target='optimizer;args;lr'),
+        CustomArgs(['--bs', '--batch_size'], type=int, target='data_loader;args;batch_size')
     ]
     config = ConfigParser.from_args(args, options)
 
