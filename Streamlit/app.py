@@ -17,7 +17,7 @@ def main():
 
     # with open("config.yaml") as f:
     #     config = yaml.load(f, Loader=yaml.FullLoader)
-    with open("config.json") as f:
+    with open("/home/hj/Study/MLops/Streamlit/config.json", 'r') as f:
         config = json.load(f)
 
     model = load_model()

@@ -16,11 +16,11 @@ def load_model() -> CNN:
     """
     # with open("config.yaml") as f:
     #     config = yaml.load(f, Loader=yaml.FullLoader)
-    with open("config.json") as f:
+    with open("./Streamlit/config.json") as f:
         config = json.load(f)
 
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-    model = CNN(class_n=25, rate=0.1).to(device)
+    model = CNN(class_n=25, rate=0.).to(device)
     model.load_state_dict(torch.load(config["model_path"], map_location=device))
 
     return model
