@@ -64,12 +64,27 @@ class BaseTrainer:
         
         not_improved_count = 0
         for epoch in range(self.start_epoch, self.epochs + 1):
-            result = self._train_epoch(epoch)
+            result, target_list, output_list = self._train_epoch(epoch)
 
             # save logged informations into log dict
             log = {'epoch': epoch}
             log.update(result)
 
+            if epoch == self.epochs:
+                # TODO : wandb confusion Matrix 추가
+                # GT는 list에 붙이면 됨 이때 extend로 붙여야 할 듯?
+                # preds는 one-hot encoding으로 하면 됨 + extend 형태로 list에 추가.
+                # class_name은 list로 뱉어야 할 듯
+
+                class_names = [self.config['Annotation_info']['human_label_decoder'][str(k)] for k in range(25)]
+                # class_names = [k for k in range(25)]
+                wandb.log({
+                    "conf_mat":  wandb.sklearn.plot_confusion_matrix(
+                        target_list,
+                        output_list,
+                        class_names,
+                    )
+                })
             # print logged informations to the screen
             for key, value in log.items():
                 self.logger.info('    {:15s}: {}'.format(str(key), value))

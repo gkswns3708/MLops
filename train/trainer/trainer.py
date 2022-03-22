@@ -2,6 +2,7 @@ import numpy as np
 import torch
 from base.base_trainer import BaseTrainer
 from utils import inf_loop, MetricTracker
+import wandb
 # TODO : 이거 from base import BaseTrainer가 원본이다. 왜 그런지 이유 찾기
 # TODO : 내 프로젝트 고유의 것은 없으려나...? 없어보이기는 함.
 
@@ -14,18 +15,18 @@ class Trainer(BaseTrainer):
         super().__init__(model, criterion, metric_ftns, optimizer, config)
         self.config = config
         self.device = device
-        self.data_loader = train_data_loader
+        self.train_data_loader = train_data_loader
         self.device = device
         if len_epoch is None:
             # 뭔가 assert 문으로 처리해도 될 듯 함.
-            self.len_epoch = len(self.data_loader)
+            self.len_epoch = len(self.train_data_loader)
         else:
             self.train_data_loader = inf_loop(train_data_loader)
             self.len_epoch = len_epoch
         self.valid_data_loader = valid_data_loader
         self.do_validation = self.valid_data_loader is not None
         self.lr_scheduler = lr_scheduler
-        self.log_step = 100
+        self.log_step = len(self.train_data_loader)//10
         # log를 batch_size의 제곱근마다 해라?
         # TODO : log_step 국룰 찾아보기.
 
@@ -43,10 +44,11 @@ class Trainer(BaseTrainer):
         """
         self.model.train()
         self.train_metrics.reset()
-        
+        output_list = []
+        target_list = []
         # TODO : 해당 for문을 돌았을 때 data를 얼마나 iteration을 하는지? 그리고 해당 과정은 몇개의 step이라고 말할 수 있는지
         # TODO : 
-        for batch_idx, (data, target) in enumerate(self.data_loader):
+        for batch_idx, (data, target) in enumerate(self.train_data_loader):
             # TODO : Data도 GPU에 보내고 있음
             data, target = data.to(self.device), target.to(self.device)
             # TODO : 얘 역할 알아내기. 예상으로는 아래 writer.set_step에 작성하는 걸로 보아 
@@ -79,6 +81,10 @@ class Trainer(BaseTrainer):
                 ))
                 if self.cfg_wandb['use']:
                     wandb.log({"loss" : loss.detach()}, step=example_ct)
+
+            output_list.extend(torch.argmax(output, dim=1).tolist())
+            target_list.extend(target.tolist())
+            
             if batch_idx == self.len_epoch:
                 # 이렇게 data_loader를 끝낼 수 있는 듯 하다.
                 break 
@@ -87,13 +93,13 @@ class Trainer(BaseTrainer):
 
         if self.do_validation:
             val_log = self._valid_epoch(epoch)
-            log.update(**{'val_' + metric: value for metric, value in val_log.items()})
+            log.update(**{'val_'+k : v for k, v in val_log.items()})
             if self.cfg_wandb['use']:
-                wandb.log.update(**{'val_' + metric: value for metric, value in val_log.items()}, step=example_ct)
+                wandb.log({'val_'+k : v for k, v in val_log.items()}, step=example_ct)
         if self.lr_scheduler is not None:
             self.lr_scheduler.step()
         
-        return log
+        return log, target_list, output_list
 
     def _valid_epoch(self, epoch):
         """
@@ -134,9 +140,9 @@ class Trainer(BaseTrainer):
         
     def _progress(self, batch_idx):
         base = '[{}/{} ({:.0f}%]'
-        if hasattr(self.data_loader, 'n_samples'):
-            current = batch_idx * self.data_loader.batch_size
-            total = self.data_loader.n_samples
+        if hasattr(self.train_data_loader, 'n_samples'):
+            current = batch_idx * self.train_data_loader.batch_size
+            total = self.train_data_loader.n_samples
         else:
             current = batch_idx
             total = self.len_epoch

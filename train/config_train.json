@@ -14,13 +14,13 @@
         }
     },
     "train_Config": {
-        "batch_size": 32,
+        "batch_size": 16,
         "lr": 0.0001,
         "dropout_rate": 0.1,
         "epochs": 50
     },
     "Model_Save_Path": "../model_weight",
-    "is_Preprocessing": true,
+    "is_Preprocessing": false,
     "Dataset": {
         "type": "BaseDataset",
         "args": {
@@ -32,7 +32,7 @@
         "type": "CropDataLoader",
         "args": {
             "data_dir": "../Prepared_Data",
-            "batch_size": 32,
+            "batch_size": 16,
             "shuffle": true,
             "valid_split_ratio": 0.2,
             "num_workers": 2,
@@ -75,7 +75,7 @@
         }
     },
     "trainer": {
-        "epochs": 2,
+        "epochs": 10,
         "save_dir": "saved/",
         "save_period": 1,
         "verbosity": 2,
@@ -84,7 +84,7 @@
         "tensorboard": false
     },
     "wandb": {
-        "use": false,
+        "use": true,
         "args": {
             "project": "image-classification",
             "entity": "hj_ai"
