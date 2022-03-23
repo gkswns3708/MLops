@@ -76,7 +76,7 @@ def main(config):
     if config['wandb']['use']:
         with wandb.init(name=config['name'], project=config['wandb']['args']['project'],
                         entity=config['wandb']['args']['entity'], config=config):
-            wandb_config = wandb.config
+            wandb_config = wandb.config 
             _main(config)
     else:
         _main(config)
