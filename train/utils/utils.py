@@ -103,6 +103,7 @@ def get_Resized_Image_Dataset(config: dict) -> None:
         cv2.imwrite(osp.join(Data_save_path, name + ".jpg"), img)
         with open(osp.join(Data_save_path, name + ".json"), "w") as f:
             json.dump(now_json, f, indent=4)
+    # TODO : Raw_Data를 Prepared_Data로 생성했으면 Raw_Data를 삭제할 예정.
 
 
 
