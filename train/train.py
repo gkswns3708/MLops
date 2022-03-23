@@ -43,7 +43,7 @@ def main(config):
             Custom_loader,
             transform=train_transform,
             default_transform=default_transform,
-            config=config,
+            config=config, 
         )
 
         train_data_loader, valid_data_loader = Dataloader.split_validation()
