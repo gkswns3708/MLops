@@ -82,7 +82,6 @@ def get_Resized_Image_Dataset(config: dict) -> None:
     # 5762장 Resized 실행시 1분 50분 정도 Local 환경에서 소요 됨.
     Raw_Data_Path = config["Raw_Data_Path"]
     Raw_Data_Path_list = sorted(glob(osp.join(Raw_Data_Path, "*")))
-    print(len(Raw_Data_Path_list))
     for now_dir_path in Raw_Data_Path_list:
         data_num = now_dir_path.split("/")[-1]
         now_image_path = osp.join(now_dir_path, f"{data_num}.jpg")
