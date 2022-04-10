@@ -7,8 +7,7 @@
 /Streamlit/__pycache__
 /train/wandb
 /train/saved
-/train/model
 /train/Visualize.ipynb
 /train/config_train.json
-/train/**/__pycache__
+/**/__pycache__
 /wandb

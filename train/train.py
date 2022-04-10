@@ -26,8 +26,8 @@ def main(config):
     # config_parser는 말 그대로 dict type이 맞음 []로 접근할 수 있음.
     def _main(config):
         logger = config.get_logger('train')
-        # config = json.load(open('./config_train.json', 'r'))
         if config["is_Preprocessing"]:
+            utils.make_necessary_dir(config['Prepared_Data_Path'], config['Model_Save_Path'])
             utils.raw_image_json = utils.get_image_json_path(config["Raw_Data_Path"])
             utils.get_Resized_Image_Dataset(config)
             utils.Set_Dataset_CSV(config)
@@ -43,7 +43,7 @@ def main(config):
             Custom_loader,
             transform=train_transform,
             default_transform=default_transform,
-            config=config,
+            config=config, 
         )
 
         train_data_loader, valid_data_loader = Dataloader.split_validation()
